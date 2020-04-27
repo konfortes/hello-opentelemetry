@@ -7,13 +7,17 @@ kubectl create ns tracing
 
 set -e
 
-echo deploying opentelemetry collector operator...
-kubectl -n opentelemetry apply -f k8s/opentelemetry/operator/crds/opentelemetry.io_opentelemetrycollectors_crd.yaml
-kubectl -n opentelemetry apply -f k8s/opentelemetry/operator/role_binding.yaml
-kubectl -n opentelemetry apply -f k8s/opentelemetry/operator/role.yaml
-kubectl -n opentelemetry apply -f k8s/opentelemetry/operator/service_account.yaml
-kubectl -n opentelemetry apply -f k8s/opentelemetry/operator/operator.yaml
-kubectl -n opentelemetry apply -f k8s/opentelemetry/operator/crds/simplest.yaml
+echo deploying opentelemetry agent and collector...
+kubectl -n opentelemetry apply -f k8s/opentelemetry/agent.yaml
+kubectl -n opentelemetry apply -f k8s/opentelemetry/collector.yaml
+
+# echo deploying opentelemetry collector operator...
+# kubectl -n opentelemetry apply -f k8s/opentelemetry/operator/crds/opentelemetry.io_opentelemetrycollectors_crd.yaml
+# kubectl -n opentelemetry apply -f k8s/opentelemetry/operator/role_binding.yaml
+# kubectl -n opentelemetry apply -f k8s/opentelemetry/operator/role.yaml
+# kubectl -n opentelemetry apply -f k8s/opentelemetry/operator/service_account.yaml
+# kubectl -n opentelemetry apply -f k8s/opentelemetry/operator/operator.yaml
+# kubectl -n opentelemetry apply -f k8s/opentelemetry/operator/crds/simplest.yaml
 
 echo deploying kube-prometheus...
 kubectl create -f k8s/kube-prometheus/manifests/setup

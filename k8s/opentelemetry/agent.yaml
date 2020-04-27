@@ -1,0 +1,72 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-agent-conf
+  labels:
+    app: opentelemetry
+    component: otel-agent-conf
+data:
+  otel-agent-config: |
+    receivers:
+      opencensus: {}
+    exporters:
+      opencensus:
+        endpoint: "otel-collector.default:55678" # TODO: Update me
+    processors:
+      queued_retry:
+        num_workers: 4
+        queue_size: 100
+        retry_on_failure: true
+    extensions:
+      zpages: {}
+    service:
+      extensions: [zpages]
+      pipelines:
+        traces:
+          receivers: [opencensus]
+          processors: [queued_retry]
+          exporters: [opencensus]
+---
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: otel-agent
+  labels:
+    app: opentelemetry
+    component: otel-agent
+spec:
+  template:
+    metadata:
+      labels:
+        app: opentelemetry
+        component: otel-agent
+    spec:
+      containers:
+      - command:
+          - "/otelcol"
+          - "--config=/conf/otel-agent-config.yaml"
+        image: otel/opentelemetry-collector-dev:latest
+        name: otel-agent
+        resources:
+          limits:
+            cpu: 500m
+            memory: 500Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - containerPort: 55678 # Default Opencensus receiver port.
+        - containerPort: 55679 # ZPages endpoint.
+#        - containerPort: 14268 # Default Jaeger HTTP receiver port.
+#        - containerPort: 9411 # Default Zipkin receiver port.
+        volumeMounts:
+        - name: otel-agent-config-vol
+          mountPath: /conf
+      volumes:
+        - configMap:
+            name: otel-agent-conf
+            items:
+              - key: otel-agent-config
+                path: otel-agent-config.yaml
+          name: otel-agent-config-vol
